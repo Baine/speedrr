@@ -20,12 +20,18 @@ class FakeQbitClient:
         self.download_limits = []
         self.login_error = None
         self.torrents = []
+        self.torrents_info_calls = []
 
     def auth_log_in(self):
         if self.login_error is not None:
             raise self.login_error
 
-    def torrents_info(self):
+    def torrents_info(self, status_filter=None):
+        self.torrents_info_calls.append(status_filter)
+        if status_filter == "downloading":
+            return [t for t in self.torrents if t.state_enum.is_downloading]
+        if status_filter == "seeding":
+            return [t for t in self.torrents if t.state_enum.is_uploading]
         return self.torrents
 
     def transfer_set_upload_limit(self, limit):
@@ -125,6 +131,8 @@ def test_active_torrent_count_ignores_idle_torrents(fake_qbit, speedrr_config, q
     ]
 
     assert client.get_active_torrent_count() == 2
+    # The count must use server-side filters, not a full library dump.
+    assert fake_qbit["client"].torrents_info_calls == ["downloading", "seeding"]
 
 
 def test_set_upload_speed_converts_config_units_to_bytes(

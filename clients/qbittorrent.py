@@ -13,6 +13,9 @@ class qBittorrentClient:
             password=config_client.password,
             FORCE_SCHEME_FROM_HOST=True,
             VERIFY_WEBUI_CERTIFICATE=config_client.https_verify,
+            # Default is ~15s read; a loaded server seeding at full speed can
+            # legitimately take longer to answer.
+            REQUESTS_ARGS={"timeout": (5, 30)},
         )
         self._client_config = config_client
         self._config = config
@@ -46,11 +49,12 @@ class qBittorrentClient:
 
         logger.debug(f"<qbit|{self._client_config.url}> Getting active torrent count")
 
-        return sum(
-            1
-            for torrent in self._client.torrents_info()
-            if torrent.state_enum.is_downloading or torrent.state_enum.is_uploading
-        )
+        # Server-side status filters keep only the matching torrents in the
+        # response instead of serializing the whole library.
+        downloading = len(self._client.torrents_info(status_filter="downloading"))
+        uploading = len(self._client.torrents_info(status_filter="seeding"))
+
+        return downloading + uploading
 
     def set_upload_speed(self, speed: int | float) -> None:
         "Set the upload speed limit for the client, in config units."
