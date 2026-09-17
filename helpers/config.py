@@ -18,8 +18,8 @@ class ClientConfig(YAMLWizard):
 @dataclass(frozen=True)
 class IgnoreStreamConfig(YAMLWizard):
     local: bool
-    ip_networks: tuple[str, ...] | None
     paused_after: int
+    ip_networks: tuple[str, ...] | None = None
 
 
 @dataclass(frozen=True)

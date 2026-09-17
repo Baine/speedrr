@@ -71,6 +71,16 @@ def test_schedule_can_be_disabled(tmp_path):
     assert config.modules.schedule is None
 
 
+def test_ignore_streams_ip_networks_is_optional(tmp_path):
+    no_networks = VALID_YAML.replace(
+        "      ignore_streams:\n        local: true\n        ip_networks: null\n",
+        "      ignore_streams:\n        local: true\n",
+    )
+    config = SpeedrrConfig.from_yaml_file(write(tmp_path, no_networks))
+
+    assert config.modules.media_servers[0].ignore_streams.ip_networks is None
+
+
 def test_client_share_defaults_are_one(tmp_path):
     config = SpeedrrConfig.from_yaml_file(write(tmp_path, VALID_YAML))
 
