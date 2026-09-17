@@ -13,7 +13,7 @@
 > - **Stream-based speed control** and **unlimited speed** support (port of upstream PR #34)
 > - The schedule module can be disabled by omitting it from the config
 >
-> Image: `ghcr.io/Baine/speedrr`.
+> Image: `ghcr.io/baine/speedrr`.
 
 Change your torrent client's upload speed dynamically, on certain events such as:
 - When a Plex/Jellyfin/Emby/Silo stream starts
@@ -44,7 +44,7 @@ This script is ideal for users with limited upload speed, however anyone can use
 ### Docker
 Pull the image with:
 ```cmd
-docker pull ghcr.io/Baine/speedrr
+docker pull ghcr.io/baine/speedrr
 ```
 
 Your config file should be stored outside of the container, for easy editing.
@@ -58,7 +58,7 @@ docker run -d
     -v /folder_with_config/:/data/
     --name speedrr
     --network host
-    ghcr.io/Baine/speedrr
+    ghcr.io/baine/speedrr
 ```
 
 ### Unraid

@@ -15,7 +15,7 @@
 SHELL         := bash
 .SHELLFLAGS   := -o pipefail -c
 
-IMAGE   ?= ghcr.io/Baine/speedrr
+IMAGE   ?= ghcr.io/baine/speedrr
 VERSION ?= dev
 TOWER   ?= tower.local
 

@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <Container version="2">
   <Name>speedrr</Name>
-  <Repository>ghcr.io/Baine/speedrr</Repository>
+  <Repository>ghcr.io/baine/speedrr</Repository>
   <Registry>https://github.com/users/Baine/packages/container/package/speedrr</Registry>
   <Network>host</Network>
   <MyIP/>

@@ -31,7 +31,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ghcr.io/Baine/speedrr
+          images: ghcr.io/baine/speedrr
           tags: |
             type=semver,pattern=v{{version}}
             type=raw,value=latest,enable=${{ !contains(github.ref, '-') }}
