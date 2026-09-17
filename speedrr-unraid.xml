@@ -1,22 +1,22 @@
 <?xml version="1.0"?>
 <Container version="2">
   <Name>speedrr</Name>
-  <Repository>ghcr.io/sgtsquiggs/speedrr</Repository>
-  <Registry>https://github.com/users/sgtsquiggs/packages/container/package/speedrr</Registry>
+  <Repository>ghcr.io/Baine/speedrr</Repository>
+  <Registry>https://github.com/users/Baine/packages/container/package/speedrr</Registry>
   <Network>host</Network>
   <MyIP/>
   <Shell>sh</Shell>
   <Privileged>false</Privileged>
-  <Project>https://github.com/sgtsquiggs/speedrr</Project>
+  <Project>https://github.com/Baine/speedrr</Project>
   <Overview>
-    Dynamically manage upload speeds on torrent clients, with Plex/Jellyfin/Emby intergration.[br]
-    Preset config available at: https://github.com/sgtsquiggs/speedrr/blob/main/config.yaml [br]
+    Dynamically manage upload and download speeds on torrent clients, with Plex/Jellyfin/Emby/Silo integration.[br]
+    Preset config available at: https://github.com/Baine/speedrr/blob/main/config.yaml [br]
     Config needs to be saved in your /mnt/user/appdata/speedrr/ folder.
   </Overview>
   <Category>Tools:Utilities MediaApp:Other MediaApp:Video MediaServer:Video</Category>
   <WebUI/>
-  <TemplateURL>https://raw.githubusercontent.com/sgtsquiggs/speedrr/main/speedrr-unraid.xml</TemplateURL>
-  <Icon>https://raw.githubusercontent.com/sgtsquiggs/speedrr/main/images/speedrr.png</Icon>
+  <TemplateURL>https://raw.githubusercontent.com/Baine/speedrr/main/speedrr-unraid.xml</TemplateURL>
+  <Icon>https://raw.githubusercontent.com/Baine/speedrr/main/images/speedrr.png</Icon>
   <ExtraParams/>
   <PostArgs/>
   <CPUset/>

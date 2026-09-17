@@ -17,7 +17,7 @@ FROM python:3.12-alpine
 
 # Links the GHCR package to this repository. Without image.source the
 # package is orphaned: no repo, no README, reduced settings page.
-LABEL org.opencontainers.image.source="https://github.com/sgtsquiggs/speedrr"
+LABEL org.opencontainers.image.source="https://github.com/Baine/speedrr"
 LABEL org.opencontainers.image.description="speedrr, patched to run on qBittorrent 5.2+"
 LABEL org.opencontainers.image.licenses="GPL-3.0"
 

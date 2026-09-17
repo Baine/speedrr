@@ -8,7 +8,7 @@ On tower, from the mux network:
     docker run --rm --network mux \
       -v /mnt/user/appdata/speedrr:/data \
       -v $PWD/scripts/verify_qbt.py:/tmp/verify_qbt.py:ro \
-      ghcr.io/sgtsquiggs/speedrr:vX.Y.Z python /tmp/verify_qbt.py
+      ghcr.io/Baine/speedrr:vX.Y.Z python /tmp/verify_qbt.py
 
 Writes a temporary upload limit and restores the original before exiting.
 """
