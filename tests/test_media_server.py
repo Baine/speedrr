@@ -237,6 +237,17 @@ def stream_plex_config(speeds, default=None):
     )
 
 
+def test_unreachable_server_at_startup_does_not_crash(
+    httpx_mock, speedrr_config, plex_server_config
+):
+    httpx_mock.add_exception(httpx.ConnectError("Connection refused"))
+
+    # Must construct without raising; the run loop retries every update_interval.
+    module = MediaServerModule(speedrr_config, [plex_server_config], threading.Event())
+
+    assert module.get_reduction_value() == (0, 0)
+
+
 def make_module(httpx_mock, speedrr_config, server_config, sessions=None):
     """Build a real MediaServerModule.
 

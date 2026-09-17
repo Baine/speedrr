@@ -50,7 +50,15 @@ class MediaServerModule:
                 )
                 exit()
 
-            self.servers[-1].get_bandwidth()
+            # Tolerate a server being down at startup; the run loop retries every
+            # update_interval, so an unreachable server must not kill the daemon.
+            try:
+                self.servers[-1].get_bandwidth()
+            except Exception:
+                logger.warning(
+                    f"<media_servers> Initial poll of {server.url} failed, "
+                    "will retry in the background:\n" + traceback.format_exc()
+                )
 
     def get_reduction_value(self) -> tuple[float, float]:
         """How much to reduce the speed by, in the config's units.
