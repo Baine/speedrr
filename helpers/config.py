@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Literal
 
 from dataclass_wizard.mixins.yaml import YAMLWizard  # type: ignore
@@ -23,8 +23,15 @@ class IgnoreStreamConfig(YAMLWizard):
 
 
 @dataclass(frozen=True)
+class StreamBasedSpeedsConfig(YAMLWizard):
+    enabled: bool
+    speeds: dict[int, int | float | str]
+    default: int | float | str | None = None
+
+
+@dataclass(frozen=True)
 class MediaServerConfig(YAMLWizard):
-    type: Literal["plex", "tautulli", "jellyfin", "emby"]
+    type: Literal["plex", "tautulli", "jellyfin", "emby", "silo"]
     url: str
     https_verify: bool
     bandwidth_multiplier: float
@@ -32,6 +39,7 @@ class MediaServerConfig(YAMLWizard):
     ignore_streams: IgnoreStreamConfig
     token: str | None = None
     api_key: str | None = None
+    stream_based_speeds: StreamBasedSpeedsConfig | None = None
 
     def __hash__(self) -> int:
         return super().__hash__()
@@ -48,8 +56,8 @@ class ScheduleConfig(YAMLWizard):
 
 @dataclass(frozen=True)
 class ModulesConfig(YAMLWizard):
-    media_servers: list[MediaServerConfig] | None
-    schedule: list[ScheduleConfig] | None
+    media_servers: list[MediaServerConfig] | None = None
+    schedule: list[ScheduleConfig] | None = None
 
 
 @dataclass(frozen=True)
@@ -89,7 +97,7 @@ class SpeedrrConfig(YAMLWizard):
     min_download: int
     max_download: int
     clients: list[ClientConfig]
-    modules: ModulesConfig
+    modules: ModulesConfig = field(default_factory=ModulesConfig)
     manual_speed_algorithm_share: bool | None = False
 
 

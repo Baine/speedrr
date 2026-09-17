@@ -67,6 +67,7 @@ def make_media_server_module():
         return SimpleNamespace(
             _config=config,
             reduction_value_dict={},
+            stream_count_dict={},
             _update_event=threading.Event(),
         )
 

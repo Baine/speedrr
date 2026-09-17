@@ -79,7 +79,7 @@ modules:
     # Note: You should only use either plex or tautulli for every Plex Media Server you have.
     
     # The type of server to get data from
-    # Options: plex, tautulli, jellyfin, emby
+    # Options: plex, tautulli, jellyfin, emby, silo
     - type: <server_type>
 
       # The URL to your Plex/Tautulli/Jellyfin/Emby server
@@ -89,9 +89,10 @@ modules:
       # Help: https://support.plex.tv/articles/204059436-finding-an-authentication-token-x-plex-token/
       token: <plex_x_token>
 
-      # TAUTULLI JELLYFIN AND EMBY ONLY, the API key to access your Tautulli/Jellyfin/Emby server
+      # TAUTULLI, JELLYFIN, EMBY AND SILO ONLY, the API key to access your Tautulli/Jellyfin/Emby/Silo server
       # Tautulli: Settings > Web Interface > API > API key
       # Jellyfin/Emby: Dashboard > Advanced > API Keys > +
+      # Silo: Settings > API Keys (an admin-owned key, starts with sa_)
       api_key: <api_key>
 
       # Whether to verify the SSL certificate of the Plex/Tautulli server
@@ -121,6 +122,24 @@ modules:
         # After a stream has been paused for this amount of seconds, it will be ignored from calculations
         # Note: To disable this feature, set to -1.
         paused_after: 300
+
+      # Optional: Set specific upload speeds based on the NUMBER of active streams,
+      # instead of deducting the streams' bandwidth from the upload speed.
+      # If unset (or enabled: false), the default bandwidth-based mode is used.
+      # If any media server enables this, upload speed is chosen by the total
+      # count of non-ignored streams across all media servers. Download is unaffected.
+      # stream_based_speeds:
+      #   enabled: true
+      #   # Upload speed per stream count (in the units specified at the top of the config)
+      #   # Values can be numbers, percentages of max_upload ("50%"), or "unlimited"
+      #   # If a count has no exact match, the highest defined count at or below it is used
+      #   speeds:
+      #     0: unlimited   # No streams = unlimited upload
+      #     1: 10          # 1 stream = 10 Mbit/s upload
+      #     2: 8           # 2 streams = 8 Mbit/s upload
+      #   # Optional fallback, used when the count is below every defined count
+      #   # (e.g. speeds starts at 1 and a 0-stream update arrives); if unset, max_upload is used
+      #   default: 5
   
 
   # Changes the upload/download speed based on the time of day, and what day of the week
@@ -141,10 +160,12 @@ modules:
       # The upload speed deducted in this time period.
       # Note: This can be a percentage of the maximum or a fixed value (uses units specified at the top of config).
       # Example: 50%, 10, 5, 80%, 20%, 0
+      # Note: Use "unlimited" to remove the upload speed limit entirely during this period.
       upload: 60%
 
       # The download speed deducted in this time period.
       # Note: This can be a percentage of the maximum or a fixed value (uses units specified at the top of config).
       # Example: 50%, 10, 5, 80%, 20%, 0
+      # Note: Use "unlimited" to remove the download speed limit entirely during this period.
       download: 40%
 

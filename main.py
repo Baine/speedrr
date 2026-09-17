@@ -6,6 +6,30 @@ from helpers import arguments, config, log_loader
 from helpers.log_loader import logger
 from modules import media_server, schedule
 
+
+def resolve_speed(value: int | float | str, max_speed: int) -> float:
+    """Resolve a config speed value, in the config's units.
+
+    Accepts numbers, percentage strings ("50%" of max_speed), and "unlimited"
+    (returned as infinity).
+    """
+
+    if isinstance(value, str):
+        if value.lower() == "unlimited":
+            return float("inf")
+
+        if value.endswith("%"):
+            return max_speed * float(value[:-1]) / 100
+
+        return float(value)
+
+    return float(value)
+
+
+def format_speed(value: float, units: str) -> str:
+    return "unlimited" if value == float("inf") else f"{value}{units}"
+
+
 if __name__ == "__main__":
     args = arguments.load_args()
 
@@ -82,18 +106,54 @@ if __name__ == "__main__":
             module_reduction_values = [module.get_reduction_value() for module in modules]
 
             # These are in the config's units
-            new_upload_speed = max(
-                cfg.min_upload,
-                (cfg.max_upload - sum(module[0] for module in module_reduction_values)),
-            )
+            upload_reductions = [module[0] for module in module_reduction_values]
+            download_reductions = [module[1] for module in module_reduction_values]
 
-            new_download_speed = max(
-                cfg.min_download,
-                (cfg.max_download - sum(module[1] for module in module_reduction_values)),
-            )
+            # A media server module in stream-based mode signals it with -inf
+            using_stream_based_speeds = any(r == float("-inf") for r in upload_reductions)
 
-            logger.info(f"New calculated upload speed: {new_upload_speed}{cfg.units}")
-            logger.info(f"New calculated download speed: {new_download_speed}{cfg.units}")
+            if using_stream_based_speeds:
+                # The base upload speed comes from the stream count, and schedule
+                # reductions apply on top of it.
+                target_speed = next(
+                    (
+                        module.get_target_upload_speed()
+                        for module in modules
+                        if isinstance(module, media_server.MediaServerModule)
+                    ),
+                    cfg.max_upload,
+                )
+                base_upload_speed = resolve_speed(target_speed, cfg.max_upload)
+                schedule_reductions = [r for r in upload_reductions if r != float("-inf")]
+
+                if any(r == float("inf") for r in schedule_reductions):
+                    new_upload_speed = float("inf")
+                elif schedule_reductions:
+                    # An unlimited base speed is reduced from max_upload
+                    reduced_base = (
+                        cfg.max_upload if base_upload_speed == float("inf") else base_upload_speed
+                    )
+                    new_upload_speed = max(cfg.min_upload, reduced_base - sum(schedule_reductions))
+                else:
+                    new_upload_speed = base_upload_speed
+            else:
+                if any(r == float("inf") for r in upload_reductions):
+                    new_upload_speed = float("inf")
+                else:
+                    new_upload_speed = max(cfg.min_upload, cfg.max_upload - sum(upload_reductions))
+
+            # Download is always reduction-based; stream-based mode does not affect it.
+            if any(r == float("inf") for r in download_reductions):
+                new_download_speed = float("inf")
+            else:
+                new_download_speed = max(
+                    cfg.min_download, cfg.max_download - sum(download_reductions)
+                )
+
+            logger.info(f"New calculated upload speed: {format_speed(new_upload_speed, cfg.units)}")
+            logger.info(
+                f"New calculated download speed: {format_speed(new_download_speed, cfg.units)}"
+            )
 
             logger.info("Getting active torrent counts")
 
@@ -104,17 +164,14 @@ if __name__ == "__main__":
             sum_active_torrents = sum(client_active_torrent_dict.values())
 
             for torrent_client, active_torrent_count in client_active_torrent_dict.items():
-                # If there are no active torrents, set the upload speed to the new speed
-                if cfg.manual_speed_algorithm_share:
+                # Unlimited speed is shared whole, so skip the splitting
+                if new_upload_speed == float("inf"):
+                    effective_upload_speed = float("inf")
+                elif cfg.manual_speed_algorithm_share:
                     effective_upload_speed = (
                         torrent_client._client_config.download_shares
                         / sum_client_upload_shares
                         * new_upload_speed
-                    )
-                    effective_download_speed = (
-                        torrent_client._client_config.upload_shares
-                        / sum_client_download_shares
-                        * new_download_speed
                     )
                 else:
                     effective_upload_speed = (
@@ -122,11 +179,22 @@ if __name__ == "__main__":
                         if active_torrent_count > 0
                         else new_upload_speed
                     )
+
+                if new_download_speed == float("inf"):
+                    effective_download_speed = float("inf")
+                elif cfg.manual_speed_algorithm_share:
+                    effective_download_speed = (
+                        torrent_client._client_config.upload_shares
+                        / sum_client_download_shares
+                        * new_download_speed
+                    )
+                else:
                     effective_download_speed = (
                         (active_torrent_count / sum_active_torrents * new_download_speed)
                         if active_torrent_count > 0
                         else new_download_speed
                     )
+
                 try:
                     torrent_client.set_upload_speed(effective_upload_speed)
                     torrent_client.set_download_speed(effective_download_speed)
@@ -140,11 +208,11 @@ if __name__ == "__main__":
                 else:
                     logger.info(
                         f"Set upload speed for {torrent_client._client_config.url} to "
-                        f"{effective_upload_speed}{cfg.units}"
+                        f"{format_speed(effective_upload_speed, cfg.units)}"
                     )
                     logger.info(
                         f"Set download speed for {torrent_client._client_config.url} to "
-                        f"{effective_download_speed}{cfg.units}"
+                        f"{format_speed(effective_download_speed, cfg.units)}"
                     )
 
             logger.info("Speeds updated")

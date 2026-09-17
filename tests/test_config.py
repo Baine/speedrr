@@ -54,6 +54,23 @@ def test_loads_a_valid_config(tmp_path):
     assert config.modules.schedule is not None
 
 
+def test_schedule_can_be_disabled(tmp_path):
+    disabled = VALID_YAML.replace(
+        """  schedule:
+    - start: "08:00"
+      end: "02:00"
+      days: ["all"]
+      upload: 100
+      download: 100
+""",
+        "  schedule: null\n",
+    )
+    config = SpeedrrConfig.from_yaml_file(write(tmp_path, disabled))
+
+    assert config.modules.media_servers is not None
+    assert config.modules.schedule is None
+
+
 def test_client_share_defaults_are_one(tmp_path):
     config = SpeedrrConfig.from_yaml_file(write(tmp_path, VALID_YAML))
 
@@ -86,3 +103,52 @@ def test_rejects_an_unknown_media_server_type(tmp_path):
 
     with pytest.raises(ParseError):
         SpeedrrConfig.from_yaml_file(write(tmp_path, bad))
+
+
+STREAM_BASED_YAML = VALID_YAML.replace(
+    """      ignore_streams:
+        local: true
+        ip_networks: null
+        paused_after: 300
+""",
+    """      ignore_streams:
+        local: true
+        ip_networks: null
+        paused_after: 300
+      stream_based_speeds:
+        enabled: true
+        speeds:
+          0: unlimited
+          1: 10
+          2: "50%"
+        default: 5
+""",
+)
+
+
+def test_stream_based_speeds_parse(tmp_path):
+    config = SpeedrrConfig.from_yaml_file(write(tmp_path, STREAM_BASED_YAML))
+
+    speeds_config = config.modules.media_servers[0].stream_based_speeds
+    assert speeds_config is not None
+    assert speeds_config.enabled is True
+    # YAML integer keys arrive as ints (dataclass-wizard coerces dict keys per
+    # the dict[int, ...] annotation), so counts match with plain int lookups.
+    assert speeds_config.speeds == {0: "unlimited", 1: 10, 2: "50%"}
+    assert all(isinstance(key, int) for key in speeds_config.speeds)
+    assert speeds_config.default == 5
+
+
+def test_stream_based_speeds_default_is_optional(tmp_path):
+    without_default = STREAM_BASED_YAML.replace("        default: 5\n", "")
+    config = SpeedrrConfig.from_yaml_file(write(tmp_path, without_default))
+
+    speeds_config = config.modules.media_servers[0].stream_based_speeds
+    assert speeds_config is not None
+    assert speeds_config.default is None
+
+
+def test_stream_based_speeds_is_optional_on_servers(tmp_path):
+    config = SpeedrrConfig.from_yaml_file(write(tmp_path, VALID_YAML))
+
+    assert config.modules.media_servers[0].stream_based_speeds is None

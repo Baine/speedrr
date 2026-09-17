@@ -154,6 +154,16 @@ def test_speeds_floor_at_one_byte_per_second(fake_qbit, speedrr_config, qbit_cli
     assert fake_qbit["client"].upload_limits == [1]
 
 
+def test_unlimited_sets_a_zero_limit(fake_qbit, speedrr_config, qbit_client_config):
+    # qBittorrent reads limit 0 as "no limit", which is exactly the intent here.
+    client = qBittorrentClient(speedrr_config, qbit_client_config)
+    client.set_upload_speed(float("inf"))
+    client.set_download_speed(float("inf"))
+
+    assert fake_qbit["client"].upload_limits == [0]
+    assert fake_qbit["client"].download_limits == [0]
+
+
 def _canned_response(status_code, request=None):
     """Build a real `requests.models.Response`, not a mock.
 

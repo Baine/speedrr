@@ -55,6 +55,11 @@ class qBittorrentClient:
     def set_upload_speed(self, speed: int | float) -> None:
         "Set the upload speed limit for the client, in config units."
 
+        if speed == float("inf"):
+            logger.debug(f"<qbit|{self._client_config.url}> Setting upload speed to unlimited")
+            self._client.transfer_set_upload_limit(0)
+            return
+
         logger.debug(
             f"<qbit|{self._client_config.url}> Setting upload speed to {speed}{self._config.units}"
         )
@@ -64,6 +69,11 @@ class qBittorrentClient:
 
     def set_download_speed(self, speed: int | float) -> None:
         "Set the download speed limit for the client, in config units."
+
+        if speed == float("inf"):
+            logger.debug(f"<qbit|{self._client_config.url}> Setting download speed to unlimited")
+            self._client.transfer_set_download_limit(0)
+            return
 
         logger.debug(
             f"<qbit|{self._client_config.url}> Setting dowload speed to {speed}{self._config.units}"

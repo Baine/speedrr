@@ -75,15 +75,25 @@ class TransmissionClient:
     def set_upload_speed(self, speed: int | float) -> None:
         "Set the upload speed limit for the client, in config units."
 
+        if speed == float("inf"):
+            logger.debug(f"<trans|{self._client_config.url}> Setting upload speed to unlimited")
+            self._client.set_session(speed_limit_up_enabled=False)
+            return
+
         logger.debug(
             f"<trans|{self._client_config.url}> Setting upload speed to {speed}{self._config.units}"
         )
 
         speed_limit_up = max(1, int(bit_conv(speed, self._config.units, "KB")))
-        self._client.set_session(speed_limit_up=speed_limit_up)
+        self._client.set_session(speed_limit_up_enabled=True, speed_limit_up=speed_limit_up)
 
     def set_download_speed(self, speed: int | float) -> None:
         "Set the download speed limit for the client, in config units."
+
+        if speed == float("inf"):
+            logger.debug(f"<trans|{self._client_config.url}> Setting download speed to unlimited")
+            self._client.set_session(speed_limit_down_enabled=False)
+            return
 
         logger.debug(
             f"<trans|{self._client_config.url}> Setting dowload speed to "
@@ -91,4 +101,4 @@ class TransmissionClient:
         )
 
         speed_limit_down = max(1, int(bit_conv(speed, self._config.units, "KB")))
-        self._client.set_session(speed_limit_down=speed_limit_down)
+        self._client.set_session(speed_limit_down_enabled=True, speed_limit_down=speed_limit_down)

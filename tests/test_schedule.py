@@ -56,6 +56,16 @@ def test_percentage_reduction_is_relative_to_configured_maximums(
     assert thread._download_reduce_by == 200.0
 
 
+def test_unlimited_reduction_is_infinity(make_media_server_module, speedrr_config):
+    # Case-insensitive, and the value is the reduction, which main.py reads
+    # as "remove the speed limit entirely".
+    thread = make_thread(
+        make_media_server_module, speedrr_config, upload="unlimited", download="Unlimited"
+    )
+    assert thread._upload_reduce_by == float("inf")
+    assert thread._download_reduce_by == float("inf")
+
+
 def test_next_occurrence_is_in_the_future_at_the_requested_time(
     make_media_server_module, speedrr_config
 ):
