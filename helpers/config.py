@@ -62,7 +62,6 @@ class ModulesConfig(YAMLWizard):
 
 @dataclass(frozen=True)
 class SpeedrrConfig(YAMLWizard):
-    logs_path: str | None
     units: Literal[
         "bit",
         "B",
@@ -99,6 +98,7 @@ class SpeedrrConfig(YAMLWizard):
     clients: list[ClientConfig]
     modules: ModulesConfig = field(default_factory=ModulesConfig)
     manual_speed_algorithm_share: bool | None = False
+    logs_path: str | None = None
 
 
 def load_config(config_file: str) -> SpeedrrConfig:

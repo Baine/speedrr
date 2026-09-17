@@ -81,6 +81,13 @@ def test_ignore_streams_ip_networks_is_optional(tmp_path):
     assert config.modules.media_servers[0].ignore_streams.ip_networks is None
 
 
+def test_logs_path_is_optional(tmp_path):
+    no_logs = VALID_YAML.replace("logs_path: ./logs/\n", "")
+    config = SpeedrrConfig.from_yaml_file(write(tmp_path, no_logs))
+
+    assert config.logs_path is None
+
+
 def test_client_share_defaults_are_one(tmp_path):
     config = SpeedrrConfig.from_yaml_file(write(tmp_path, VALID_YAML))
 
