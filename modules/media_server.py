@@ -220,12 +220,16 @@ class BaseServer(threading.Thread):
 
         local_ip: bool = False
 
-        if self._server_config.ignore_streams.local and (
-            ip_address == "lan" or ipaddress.ip_address(ip_address).is_private
+        # An absent address is unknown, not local: classify it as remote so an
+        # unidentifiable stream still counts.
+        if (
+            self._server_config.ignore_streams.local
+            and ip_address
+            and (ip_address == "lan" or ipaddress.ip_address(ip_address).is_private)
         ):
             local_ip = True
 
-        if self._server_config.ignore_streams.ip_networks:
+        if self._server_config.ignore_streams.ip_networks and ip_address:
             ip = ipaddress.ip_address(ip_address)
             networks = (
                 ipaddress.ip_network(network)
@@ -486,8 +490,12 @@ class SiloServer(BaseServer):
 
         logger.debug(f"{self._logger_prefix} Getting bandwidth")
 
+        # Silo answers every retired /api/v1 route with 410 Gone; the v2
+        # sessions read wraps them in a collection envelope. One page holds 200
+        # sessions, more than a single server serves at once.
         res = self._client.get(
-            "/api/v1/admin/sessions",
+            "/api/v2/admin/sessions",
+            params={"limit": 200},
             headers={"Authorization": f"Bearer {self._server_config.api_key}"},
         )
 
@@ -495,7 +503,7 @@ class SiloServer(BaseServer):
 
         res.raise_for_status()
 
-        res_json: list[dict] = res.json()
+        res_json: list[dict] = res.json()["items"]
 
         count = 0
         stream_count = 0

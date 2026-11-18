@@ -193,6 +193,11 @@ def silo_session(
     }
 
 
+def silo_page(*sessions):
+    # /api/v2 wraps the rows in a collection envelope.
+    return {"items": list(sessions), "page": {"has_more": False}}
+
+
 @pytest.fixture
 def silo(speedrr_config, make_media_server_module):
     config = MediaServerConfig(
@@ -208,7 +213,7 @@ def silo(speedrr_config, make_media_server_module):
 
 
 def test_silo_counts_playing_session_bitrate_as_bandwidth(httpx_mock, silo):
-    httpx_mock.add_response(json=[silo_session(session_id="a", bitrate=4500)])
+    httpx_mock.add_response(json=silo_page(silo_session(session_id="a", bitrate=4500)))
 
     assert silo.get_bandwidth() == 4500
 
@@ -216,14 +221,31 @@ def test_silo_counts_playing_session_bitrate_as_bandwidth(httpx_mock, silo):
     # and auth goes through the Bearer header.
     request = httpx_mock.get_requests()[0]
     assert request.headers["Authorization"] == "Bearer sa_key123"
-    assert request.url.path == "/api/v1/admin/sessions"
+    # /api/v1 answers 410 Gone since Silo 1.0.
+    assert request.url.path == "/api/v2/admin/sessions"
+
+
+def test_silo_returns_zero_when_no_sessions(httpx_mock, silo):
+    httpx_mock.add_response(json=silo_page())
+
+    assert silo.get_bandwidth() == 0
+
+
+def test_silo_counts_a_session_without_a_client_ip(httpx_mock, silo):
+    # client_ip is omitted when the server did not resolve one; an unknown
+    # address must not be mistaken for a local (ignored) stream.
+    session = silo_session(session_id="a", bitrate=4500)
+    del session["client_ip"]
+    httpx_mock.add_response(json=silo_page(session))
+
+    assert silo.get_bandwidth() == 4500
 
 
 def test_silo_ignores_session_paused_for_too_long(httpx_mock, silo):
     # process_session semantics: a paused session is only dropped once it has
     # been paused for longer than paused_after, so pre-seed the pause time.
     silo._paused_since["a"] = int(time.time()) - 1000
-    httpx_mock.add_response(json=[silo_session(session_id="a", bitrate=4500, paused=True)])
+    httpx_mock.add_response(json=silo_page(silo_session(session_id="a", bitrate=4500, paused=True)))
 
     assert silo.get_bandwidth() == 0
     assert silo._module.stream_count_dict[silo._server_config] == 0
@@ -231,10 +253,10 @@ def test_silo_ignores_session_paused_for_too_long(httpx_mock, silo):
 
 def test_silo_null_bitrate_counts_as_zero(httpx_mock, silo):
     httpx_mock.add_response(
-        json=[
+        json=silo_page(
             silo_session(session_id="a", bitrate=4000),
             silo_session(session_id="b", bitrate=None),
-        ]
+        )
     )
 
     assert silo.get_bandwidth() == 4000
