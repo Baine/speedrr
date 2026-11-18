@@ -298,6 +298,16 @@ class PlexServer(BaseServer):
         session_ids: list[str] = []
 
         for session in res_json["MediaContainer"]["Metadata"]:
+            # Plex can list a stream before it has a Session (bandwidth) object, e.g. while
+            # a client is still connecting. There is nothing to measure yet, and indexing
+            # it would fail the whole poll (and, at startup, crash speedrr).
+            if "Session" not in session or "Player" not in session:
+                logger.debug(
+                    f"{self._logger_prefix} Skipping {session.get('title', '?')}: "
+                    "no Session/Player data yet"
+                )
+                continue
+
             session_ids.append(session["Session"]["id"])
 
             bandwidth = self.process_session(

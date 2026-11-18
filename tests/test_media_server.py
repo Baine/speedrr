@@ -68,6 +68,23 @@ def test_plex_ignores_private_addresses_when_local_is_ignored(httpx_mock, plex):
     assert plex._module.stream_count_dict[plex._server_config] == 1
 
 
+def test_plex_skips_a_session_that_has_no_session_data_yet(httpx_mock, plex):
+    # Plex can list a stream before it has a Session (bandwidth) object, e.g. while a
+    # client is still connecting. That entry must be skipped, not crash the poll and
+    # hide every other stream.
+    starting = {"title": "Starting Up", "Player": {"state": "buffering", "address": "8.8.8.8"}}
+    httpx_mock.add_response(json=plex_payload(starting, plex_session(bandwidth=4000)))
+
+    assert plex.get_bandwidth() == 4000
+
+
+def test_plex_skips_a_session_without_player_data(httpx_mock, plex):
+    no_player = {"title": "Orphan", "Session": {"id": "x", "bandwidth": 9000}}
+    httpx_mock.add_response(json=plex_payload(no_player, plex_session(bandwidth=1500)))
+
+    assert plex.get_bandwidth() == 1500
+
+
 def test_plex_treats_the_literal_lan_address_as_local(httpx_mock, plex):
     # Regression guard: Plex reports "lan" where an IP is expected, and
     # ipaddress.ip_address("lan") raises. The code special-cases it.
